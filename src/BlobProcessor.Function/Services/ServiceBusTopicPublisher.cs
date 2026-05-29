@@ -29,18 +29,30 @@ public sealed class ServiceBusTopicPublisher : IMessagePublisher, IAsyncDisposab
 
     public async Task PublishAsync(ProcessedBlobMessage message, CancellationToken cancellationToken)
     {
-        var payload = JsonSerializer.Serialize(message);
-        var busMessage = new ServiceBusMessage(payload)
+        ArgumentNullException.ThrowIfNull(message, nameof(message));
+
+        try
         {
-            Subject = "blob.processed",
-            ContentType = "application/json"
-        };
+            var payload = JsonSerializer.Serialize(message);
+            var busMessage = new ServiceBusMessage(payload)
+            {
+                Subject = "blob.processed",
+                ContentType = "application/json"
+            };
 
-        busMessage.ApplicationProperties["blobName"] = message.BlobName;
-        busMessage.ApplicationProperties["processedAtUtc"] = message.ProcessedAtUtc.ToString("O");
+            busMessage.ApplicationProperties["blobName"] = message.BlobName;
+            busMessage.ApplicationProperties["processedAtUtc"] = message.ProcessedAtUtc.ToString("O");
 
-        await _sender.SendMessageAsync(busMessage, cancellationToken);
-        _logger.LogInformation("Processed message sent to Service Bus topic for blob {BlobName}", message.BlobName);
+            await _sender.SendMessageAsync(busMessage, cancellationToken);
+            _logger.LogInformation("Processed message sent to Service Bus topic for blob {BlobName}", message.BlobName);
+        }
+        catch (ServiceBusException ex)
+        {
+            _logger.LogError(ex,
+                "Service Bus error publishing message for blob {BlobName}. Reason: {Reason}",
+                message.BlobName, ex.Reason);
+            throw;
+        }
     }
 
     public ValueTask DisposeAsync()

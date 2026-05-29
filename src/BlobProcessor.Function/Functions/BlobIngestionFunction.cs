@@ -18,7 +18,6 @@ public sealed class BlobIngestionFunction
     _logger = logger;
     _fileProcessor = fileProcessor;
     _publisher = publisher;
-
   }
 
   [Function("BlobCreatedProcessor")]
@@ -28,14 +27,32 @@ public sealed class BlobIngestionFunction
       string name,
       CancellationToken cancellationToken)
   {
-    _logger.LogInformation("*** El blob encontro un nuevo archivo: {BlobName}", name);
+    _logger.LogInformation("Processing blob: {BlobName}", name);
 
-    using var reader = new StreamReader(blobStream);
-    var content = await reader.ReadToEndAsync(cancellationToken);    
+    try
+    {
+      using var reader = new StreamReader(blobStream);
+      var content = await reader.ReadToEndAsync(cancellationToken);
 
-    var processedMessage = _fileProcessor.Process(content, name);
-    await _publisher.PublishAsync(processedMessage, cancellationToken);
+      var processedMessage = _fileProcessor.Process(content, name);
+      await _publisher.PublishAsync(processedMessage, cancellationToken);
 
-    _logger.LogInformation("Blob {BlobName} processed and sent to topic", name);
+      _logger.LogInformation("Blob {BlobName} processed and sent to topic", name);
+    }
+    catch (ArgumentException ex)
+    {
+      _logger.LogError(ex, "Invalid input while processing blob {BlobName}", name);
+      throw;
+    }
+    catch (InvalidOperationException ex)
+    {
+      _logger.LogError(ex, "Processing error for blob {BlobName}", name);
+      throw;
+    }
+    catch (Exception ex)
+    {
+      _logger.LogError(ex, "Unexpected error processing blob {BlobName}", name);
+      throw;
+    }
   }
 }

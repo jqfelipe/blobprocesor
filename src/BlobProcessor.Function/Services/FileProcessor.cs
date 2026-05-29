@@ -9,6 +9,9 @@ public sealed class FileProcessor : IFileProcessor
 {
   public ProcessedBlobMessage Process(string fileContent, string blobName)
   {
+    ArgumentException.ThrowIfNullOrWhiteSpace(fileContent, nameof(fileContent));
+    ArgumentException.ThrowIfNullOrWhiteSpace(blobName, nameof(blobName));
+
     var normalized = fileContent.Trim();
     var lineCount = CountLines(normalized);
     
