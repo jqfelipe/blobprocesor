@@ -58,3 +58,4 @@ nunit-*.xml
 /src/BlobProcessor.Function/.vs/BlobProcessor.Function
 /src/.vs/BlobProcessor.Function
 /src/BlobProcessor.Function/.vs/ProjectEvaluation
+/src/BlobProcessor.Function/local.settings.json
