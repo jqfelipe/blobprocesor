@@ -1,0 +1,16 @@
+# Build output
+bin/
+obj/
+
+# User-specific files
+*.user
+*.suo
+
+# VS Code
+.vscode/
+
+# Local settings for Azure Functions
+**/local.settings.json
+
+# Logs
+*.log
